@@ -1,4 +1,4 @@
-# github-issue-linker README
+# comment-issues README
 
 This is the README for your extension "comment-issues". After writing up a brief description, we recommend including the following sections.
 
