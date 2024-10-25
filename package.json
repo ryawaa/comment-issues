@@ -1,0 +1,29 @@
+{
+  "name": "github-issue-linker",
+  "displayName": "GitHub Issue Linker",
+  "description": "Automatically links issue numbers in comments to GitHub issues.",
+  "version": "0.0.1",
+  "publisher": "your-publisher-name",
+  "engines": {
+      "vscode": "^1.50.0"
+  },
+  "activationEvents": ["*"],
+  "main": "./out/extension.js",
+  "contributes": {
+      "languages": [],
+      "commands": [],
+      "menus": {},
+      "keybindings": []
+  },
+  "scripts": {
+      "vscode:prepublish": "npm run compile",
+      "compile": "tsc -p ./",
+      "watch": "tsc -watch -p ./",
+      "postinstall": "node ./node_modules/vscode/bin/install"
+  },
+  "devDependencies": {
+      "@types/vscode": "^1.50.0",
+      "typescript": "^4.0.3",
+      "vscode": "^1.1.37"
+  }
+}
