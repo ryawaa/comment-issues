@@ -22,7 +22,7 @@ describe("Extension Tests", () => {
         const mockFilePath = path.join(__dirname, "testfile.js");
         const mockOriginUrl = "git@github.com:owner/repo.git";
 
-        // Corrected mockExecSync function
+        // Corrected mockExecSync function (testing with this is still broken)
         const mockExecSync = (
             command: string,
             options?: child_process.ExecSyncOptions
