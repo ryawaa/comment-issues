@@ -2,7 +2,7 @@
 
 Automatically link issue numbers in your code comments to your repository issues.
 
-![alt text](./screenshot.png)
+![alt text](https://github.com/user-attachments/assets/088f7f0e-19e7-4cd5-af52-1089dd0e20fd)
 
 ## Features
 
