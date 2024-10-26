@@ -2,15 +2,14 @@
     "name": "comment-issues",
     "displayName": "Comment Issues",
     "description": "Links issue numbers in comments to Repository issues.",
-    "version": "0.0.2",
+    "repository": "https://github.com/ryawaa/comment-issues",
+    "version": "1.0.0",
     "publisher": "ryawaa",
     "engines": {
         "vscode": "^1.74.0"
     },
     "activationEvents": [
-        "onLanguage:javascript",
-        "onLanguage:typescript",
-        "onLanguage:python"
+        "onLanguage"
     ],
     "main": "./out/extension.js",
     "contributes": {
