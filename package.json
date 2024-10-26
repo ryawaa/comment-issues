@@ -3,7 +3,7 @@
     "displayName": "Comment Issues",
     "description": "Links issue numbers in comments to GitHub issues.",
     "version": "0.0.2",
-    "publisher": "your-publisher-name",
+    "publisher": "ryawaa",
     "engines": {
         "vscode": "^1.74.0"
     },
@@ -21,14 +21,19 @@
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./"
+        "compile": "tsc -p ./",
+        "test": "npm run compile && node ./out/test/runTest.js"
     },
-	"devDependencies": {
-		"@types/node": "^20",
-		"@types/vscode": "^1.73.0",
-		"@typescript-eslint/eslint-plugin": "^7.14.0",
-		"@typescript-eslint/parser": "^7.14.0",
-		"eslint": "^8.26.0",
-		"typescript": "^5.6.2"
-	}
+"devDependencies": {
+  "@types/mocha": "^10.0.9",
+  "@types/node": "^20",
+  "@types/sinon": "^17.0.3",
+  "@types/vscode": "^1.73.0",
+  "@vscode/test-electron": "^1.6.1",
+  "glob": "^11.0.0",
+  "mocha": "^10.7.3",
+  "sinon": "^19.0.2",
+  "typescript": "^5.6.2"
+}
+
 }
