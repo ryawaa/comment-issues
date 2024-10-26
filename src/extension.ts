@@ -18,7 +18,9 @@ export function activate(context: vscode.ExtensionContext) {
                 return links;
             }
 
-            const { repoUrl, providerName } = repoInfo;
+            const { repoUrl, providerName, repoName } = repoInfo;
+            const displayName = repoName || providerName;
+
             const tokens = tokenizeDocument(document);
             let match: RegExpExecArray | null;
 
@@ -47,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
                             range,
                             vscode.Uri.parse(issueUrl)
                         );
-                        link.tooltip = `Open ${providerName} Issue #${issueNumber}`;
+                        link.tooltip = `Open ${displayName} Issue #${issueNumber}`;
                         links.push(link);
                     }
                 }
@@ -63,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-function getRepoInfo(filePath: string): { repoUrl: string; providerName: string } | null {
+function getRepoInfo(filePath: string): { repoUrl: string; providerName: string; repoName: string | null } | null {
     let dir = path.dirname(filePath);
 
     while (true) {
@@ -86,6 +88,7 @@ function getRepoInfo(filePath: string): { repoUrl: string; providerName: string 
 
         let repoUrl = '';
         let providerName = '';
+        let repoName: string | null = null;
 
         if (originUrl.startsWith("git@")) {
             const sshMatch = originUrl.match(/git@([^:]+):(.+?)(\.git)?$/);
@@ -94,6 +97,7 @@ function getRepoInfo(filePath: string): { repoUrl: string; providerName: string 
                 const repoPath = sshMatch[2];
                 repoUrl = `https://${host}/${repoPath}`;
                 providerName = getProviderName(host);
+                repoName = repoPath;
             }
         } else if (
             originUrl.startsWith("http://") ||
@@ -106,11 +110,12 @@ function getRepoInfo(filePath: string): { repoUrl: string; providerName: string 
                 const repoPath = urlMatch[2];
                 repoUrl = `https://${host}/${repoPath}`;
                 providerName = getProviderName(host);
+                repoName = repoPath;
             }
         }
 
         if (repoUrl && providerName) {
-            return { repoUrl, providerName };
+            return { repoUrl, providerName, repoName };
         }
 
         return null;
