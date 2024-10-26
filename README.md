@@ -6,14 +6,14 @@ Automatically link issue numbers in your code comments to your repository issues
 
 ## Features
 
--   **Automatic Issue Detection**: Scans your code comments for issue numbers in the format `(#123)` and converts them into clickable links.
--   **Supports Multiple Platforms**: Generates links compatible with GitHub, GitLab, and Bitbucket based on your repository's remote URL.
--   **Real-Time Linking**: As you write or update comments, issue links are dynamically created without any additional steps.
+- **Automatic Issue Detection**: Scans your code comments for issue numbers in the format `(#123)` and converts them into clickable links.
+- **Supports Multiple Platforms**: Generates links compatible with GitHub, GitLab, and Bitbucket based on your repository's remote URL.
+- **Real-Time Linking**: As you write or update comments, issue links are dynamically created without any additional steps.
 
 ## Requirements
 
--   A remote repository URL must be set in your workspace to generate issue links.
--   `git` must be installed and available in your system's PATH.
+- A remote repository URL must be set in your workspace to generate issue links.
+- `git` must be installed and available in your system's PATH.
 
 ## Known Issues and Reporting
 
