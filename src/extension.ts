@@ -12,18 +12,19 @@ export function activate(context: vscode.ExtensionContext) {
             token: vscode.CancellationToken
         ): vscode.ProviderResult<vscode.DocumentLink[]> {
             const links: vscode.DocumentLink[] = [];
-            const repoUrl = getRepoUrl(document.uri.fsPath);
+            const repoInfo = getRepoInfo(document.uri.fsPath);
 
-            if (!repoUrl) {
+            if (!repoInfo) {
                 return links;
             }
 
+            const { repoUrl, providerName } = repoInfo;
             const tokens = tokenizeDocument(document);
             let match: RegExpExecArray | null;
 
             for (const token of tokens) {
                 if (token.type === "comment") {
-                    issueRegex.lastIndex = 0; // Reset regex index
+                    issueRegex.lastIndex = 0;
                     while ((match = issueRegex.exec(token.text)) !== null) {
                         const issueNumber = match[1];
                         const startIndex =
@@ -41,12 +42,12 @@ export function activate(context: vscode.ExtensionContext) {
                             )
                         );
 
-                        const issueUrl = `${repoUrl}/issues/${issueNumber}`;
+                        const issueUrl = getIssueUrl(repoUrl, issueNumber, providerName);
                         const link = new vscode.DocumentLink(
                             range,
                             vscode.Uri.parse(issueUrl)
                         );
-                        link.tooltip = `Open GitHub Issue #${issueNumber}`;
+                        link.tooltip = `Open ${providerName} Issue #${issueNumber}`;
                         links.push(link);
                     }
                 }
@@ -62,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-function getRepoUrl(filePath: string): string | null {
+function getRepoInfo(filePath: string): { repoUrl: string; providerName: string } | null {
     let dir = path.dirname(filePath);
 
     while (true) {
@@ -83,21 +84,63 @@ function getRepoUrl(filePath: string): string | null {
         );
         const originUrl = originBuffer.toString().trim();
 
+        let repoUrl = '';
+        let providerName = '';
+
         if (originUrl.startsWith("git@")) {
             const sshMatch = originUrl.match(/git@([^:]+):(.+?)(\.git)?$/);
             if (sshMatch) {
-                return `https://${sshMatch[1]}/${sshMatch[2]}`;
+                const host = sshMatch[1];
+                const repoPath = sshMatch[2];
+                repoUrl = `https://${host}/${repoPath}`;
+                providerName = getProviderName(host);
             }
         } else if (
             originUrl.startsWith("http://") ||
             originUrl.startsWith("https://")
         ) {
-            return originUrl.replace(/\.git$/, "");
+            const urlWithoutGit = originUrl.replace(/\.git$/, "");
+            const urlMatch = urlWithoutGit.match(/https?:\/\/([^\/]+)\/(.+)/);
+            if (urlMatch) {
+                const host = urlMatch[1];
+                const repoPath = urlMatch[2];
+                repoUrl = `https://${host}/${repoPath}`;
+                providerName = getProviderName(host);
+            }
+        }
+
+        if (repoUrl && providerName) {
+            return { repoUrl, providerName };
         }
 
         return null;
     } catch (error) {
         return null;
+    }
+}
+
+function getProviderName(host: string): string {
+    if (host.includes('github.com')) {
+        return 'GitHub';
+    } else if (host.includes('gitlab.com')) {
+        return 'GitLab';
+    } else if (host.includes('bitbucket.org')) {
+        return 'Bitbucket';
+    } else {
+        return 'Git';
+    }
+}
+
+function getIssueUrl(repoUrl: string, issueNumber: string, providerName: string): string {
+    switch (providerName) {
+        case 'GitHub':
+            return `${repoUrl}/issues/${issueNumber}`;
+        case 'GitLab':
+            return `${repoUrl}/-/issues/${issueNumber}`;
+        case 'Bitbucket':
+            return `${repoUrl}/issues/${issueNumber}`;
+        default:
+            return `${repoUrl}/issues/${issueNumber}`;
     }
 }
 
