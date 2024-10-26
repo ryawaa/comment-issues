@@ -1,14 +1,14 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-import * as child_process from 'child_process';
-import * as fs from 'fs';
+import * as vscode from "vscode";
+import * as path from "path";
+import * as child_process from "child_process";
+import * as fs from "fs";
 
 export function activate(context: vscode.ExtensionContext) {
     const issueRegex = /\(\s*#(\d+)\s*\)/g;
 
     const provider = createDocumentLinkProvider(issueRegex, getRepoInfo);
 
-    const selector: vscode.DocumentSelector = { scheme: 'file', language: '*' };
+    const selector: vscode.DocumentSelector = { scheme: "file", language: "*" };
     context.subscriptions.push(
         vscode.languages.registerDocumentLinkProvider(selector, provider)
     );
@@ -37,15 +37,18 @@ export function createDocumentLinkProvider(
             let match: RegExpExecArray | null;
 
             for (const token of tokens) {
-                if (token.type === 'comment') {
+                if (token.type === "comment") {
                     issueRegex.lastIndex = 0;
                     while ((match = issueRegex.exec(token.text)) !== null) {
                         const issueNumber = match[1];
                         const matchStart = match.index;
                         const matchEnd = match.index + match[0].length;
 
-                        const tokenStartOffset = document.offsetAt(token.range.start);
-                        const absoluteStartOffset = tokenStartOffset + matchStart;
+                        const tokenStartOffset = document.offsetAt(
+                            token.range.start
+                        );
+                        const absoluteStartOffset =
+                            tokenStartOffset + matchStart;
                         const absoluteEndOffset = tokenStartOffset + matchEnd;
 
                         const range = new vscode.Range(
@@ -83,7 +86,7 @@ export function getRepoInfo(
     let dir = path.dirname(filePath);
 
     while (true) {
-        if (fs.existsSync(path.join(dir, '.git'))) {
+        if (fs.existsSync(path.join(dir, ".git"))) {
             break;
         }
         const parentDir = path.dirname(dir);
@@ -94,16 +97,16 @@ export function getRepoInfo(
     }
 
     try {
-        const originBuffer = execSyncFn('git config --get remote.origin.url', {
+        const originBuffer = execSyncFn("git config --get remote.origin.url", {
             cwd: dir,
         });
         const originUrl = originBuffer.toString().trim();
 
-        let repoUrl = '';
-        let providerName = '';
+        let repoUrl = "";
+        let providerName = "";
         let repoName: string | null = null;
 
-        if (originUrl.startsWith('git@')) {
+        if (originUrl.startsWith("git@")) {
             const sshMatch = originUrl.match(/git@([^:]+):(.+?)(\.git)?$/);
             if (sshMatch) {
                 const host = sshMatch[1];
@@ -113,10 +116,10 @@ export function getRepoInfo(
                 repoName = repoPath;
             }
         } else if (
-            originUrl.startsWith('http://') ||
-            originUrl.startsWith('https://')
+            originUrl.startsWith("http://") ||
+            originUrl.startsWith("https://")
         ) {
-            const urlWithoutGit = originUrl.replace(/\.git$/, '');
+            const urlWithoutGit = originUrl.replace(/\.git$/, "");
             const urlMatch = urlWithoutGit.match(/https?:\/\/([^\/]+)\/(.+)/);
             if (urlMatch) {
                 const host = urlMatch[1];
@@ -138,14 +141,14 @@ export function getRepoInfo(
 }
 
 function getProviderName(host: string): string {
-    if (host.includes('github.com')) {
-        return 'GitHub';
-    } else if (host.includes('gitlab.com')) {
-        return 'GitLab';
-    } else if (host.includes('bitbucket.org')) {
-        return 'Bitbucket';
+    if (host.includes("github.com")) {
+        return "GitHub";
+    } else if (host.includes("gitlab.com")) {
+        return "GitLab";
+    } else if (host.includes("bitbucket.org")) {
+        return "Bitbucket";
     } else {
-        return 'Git';
+        return "Git";
     }
 }
 
@@ -155,11 +158,11 @@ export function getIssueUrl(
     providerName: string
 ): string {
     switch (providerName) {
-        case 'GitHub':
+        case "GitHub":
             return `${repoUrl}/issues/${issueNumber}`;
-        case 'GitLab':
+        case "GitLab":
             return `${repoUrl}/-/issues/${issueNumber}`;
-        case 'Bitbucket':
+        case "Bitbucket":
             return `${repoUrl}/issues/${issueNumber}`;
         default:
             return `${repoUrl}/issues/${issueNumber}`;
@@ -185,8 +188,7 @@ export function tokenizeDocument(
     };
 
     const commentRegex =
-        commentRegexes[document.languageId] ||
-        /\/\/.*|\/\*[\s\S]*?\*\//g;
+        commentRegexes[document.languageId] || /\/\/.*|\/\*[\s\S]*?\*\//g;
 
     let match: RegExpExecArray | null;
     while ((match = commentRegex.exec(text)) !== null) {
@@ -201,7 +203,7 @@ export function tokenizeDocument(
         tokens.push({
             text: match[0],
             range: range,
-            type: 'comment',
+            type: "comment",
         });
     }
 
@@ -212,34 +214,34 @@ export function getTokenType(lineText: string, languageId: string): string {
     const trimmedLine = lineText.trim();
 
     const commentSymbols: { [key: string]: string[] } = {
-        javascript: ['//', '/*', '*', '*/'],
-        typescript: ['//', '/*', '*', '*/'],
-        python: ['#'],
-        rust: ['//', '/*', '*', '*/'],
-        java: ['//', '/*', '*', '*/'],
-        c: ['//', '/*', '*', '*/'],
-        cpp: ['//', '/*', '*', '*/'],
-        go: ['//', '/*', '*', '*/'],
-        swift: ['//', '/*', '*', '*/'],
+        javascript: ["//", "/*", "*", "*/"],
+        typescript: ["//", "/*", "*", "*/"],
+        python: ["#"],
+        rust: ["//", "/*", "*", "*/"],
+        java: ["//", "/*", "*", "*/"],
+        c: ["//", "/*", "*", "*/"],
+        cpp: ["//", "/*", "*", "*/"],
+        go: ["//", "/*", "*", "*/"],
+        swift: ["//", "/*", "*", "*/"],
     };
 
     const symbols = commentSymbols[languageId] || [
-        '//',
-        '#',
-        '/*',
-        '*',
-        '*/',
-        '--',
-        '%',
+        "//",
+        "#",
+        "/*",
+        "*",
+        "*/",
+        "--",
+        "%",
     ];
 
     for (const symbol of symbols) {
         if (trimmedLine.startsWith(symbol)) {
-            return 'comment';
+            return "comment";
         }
     }
 
-    return 'code';
+    return "code";
 }
 
 export function deactivate() {}
