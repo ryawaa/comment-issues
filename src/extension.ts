@@ -4,7 +4,7 @@ import * as child_process from 'child_process';
 import * as fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
-    const issueRegex = /\(#(\d+)\)/g;
+    const issueRegex = /\(\s*#(\d+)\s*\)/g;
 
     const provider = createDocumentLinkProvider(issueRegex, getRepoInfo);
 
@@ -38,7 +38,7 @@ export function createDocumentLinkProvider(
 
             for (const token of tokens) {
                 if (token.type === 'comment') {
-                    issueRegex.lastIndex = 0; 
+                    issueRegex.lastIndex = 0;
                     while ((match = issueRegex.exec(token.text)) !== null) {
                         const issueNumber = match[1];
                         const matchStart = match.index;
@@ -176,6 +176,12 @@ export function tokenizeDocument(
         javascript: /\/\/.*|\/\*[\s\S]*?\*\//g,
         typescript: /\/\/.*|\/\*[\s\S]*?\*\//g,
         python: /#.*|'''[\s\S]*?'''|"""[\s\S]*?"""/g,
+        rust: /\/\/.*|\/\*[\s\S]*?\*\//g, // broken on rust (#2)
+        java: /\/\/.*|\/\*[\s\S]*?\*\//g,
+        c: /\/\/.*|\/\*[\s\S]*?\*\//g,
+        cpp: /\/\/.*|\/\*[\s\S]*?\*\//g,
+        go: /\/\/.*|\/\*[\s\S]*?\*\//g,
+        swift: /\/\/.*|\/\*[\s\S]*?\*\//g,
     };
 
     const commentRegex =
@@ -209,6 +215,12 @@ export function getTokenType(lineText: string, languageId: string): string {
         javascript: ['//', '/*', '*', '*/'],
         typescript: ['//', '/*', '*', '*/'],
         python: ['#'],
+        rust: ['//', '/*', '*', '*/'],
+        java: ['//', '/*', '*', '*/'],
+        c: ['//', '/*', '*', '*/'],
+        cpp: ['//', '/*', '*', '*/'],
+        go: ['//', '/*', '*', '*/'],
+        swift: ['//', '/*', '*', '*/'],
     };
 
     const symbols = commentSymbols[languageId] || [
@@ -232,7 +244,6 @@ export function getTokenType(lineText: string, languageId: string): string {
 
 export function deactivate() {}
 
-// Define repo type for tests
 export type RepoInfo = {
     repoUrl: string;
     providerName: string;
