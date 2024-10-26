@@ -1,18 +1,30 @@
-import * as vscode from "vscode";
-import * as path from "path";
-import * as child_process from "child_process";
-import * as fs from "fs";
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as child_process from 'child_process';
+import * as fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
     const issueRegex = /\(#(\d+)\)/g;
 
-    const provider: vscode.DocumentLinkProvider<vscode.DocumentLink> = {
+    const provider = createDocumentLinkProvider(issueRegex, getRepoInfo);
+
+    const selector: vscode.DocumentSelector = { scheme: 'file', language: '*' };
+    context.subscriptions.push(
+        vscode.languages.registerDocumentLinkProvider(selector, provider)
+    );
+}
+
+export function createDocumentLinkProvider(
+    issueRegex: RegExp,
+    getRepoInfoFn: (filePath: string) => RepoInfo | null
+): vscode.DocumentLinkProvider<vscode.DocumentLink> {
+    return {
         provideDocumentLinks(
             document: vscode.TextDocument,
             token: vscode.CancellationToken
         ): vscode.ProviderResult<vscode.DocumentLink[]> {
             const links: vscode.DocumentLink[] = [];
-            const repoInfo = getRepoInfo(document.uri.fsPath);
+            const repoInfo = getRepoInfoFn(document.uri.fsPath);
 
             if (!repoInfo) {
                 return links;
@@ -25,26 +37,27 @@ export function activate(context: vscode.ExtensionContext) {
             let match: RegExpExecArray | null;
 
             for (const token of tokens) {
-                if (token.type === "comment") {
-                    issueRegex.lastIndex = 0;
+                if (token.type === 'comment') {
+                    issueRegex.lastIndex = 0; 
                     while ((match = issueRegex.exec(token.text)) !== null) {
                         const issueNumber = match[1];
-                        const startIndex =
-                            token.range.start.character + match.index;
-                        const endIndex = startIndex + match[0].length;
+                        const matchStart = match.index;
+                        const matchEnd = match.index + match[0].length;
+
+                        const tokenStartOffset = document.offsetAt(token.range.start);
+                        const absoluteStartOffset = tokenStartOffset + matchStart;
+                        const absoluteEndOffset = tokenStartOffset + matchEnd;
 
                         const range = new vscode.Range(
-                            new vscode.Position(
-                                token.range.start.line,
-                                startIndex
-                            ),
-                            new vscode.Position(
-                                token.range.start.line,
-                                endIndex
-                            )
+                            document.positionAt(absoluteStartOffset),
+                            document.positionAt(absoluteEndOffset)
                         );
 
-                        const issueUrl = getIssueUrl(repoUrl, issueNumber, providerName);
+                        const issueUrl = getIssueUrl(
+                            repoUrl,
+                            issueNumber,
+                            providerName
+                        );
                         const link = new vscode.DocumentLink(
                             range,
                             vscode.Uri.parse(issueUrl)
@@ -58,18 +71,19 @@ export function activate(context: vscode.ExtensionContext) {
             return links;
         },
     };
-
-    const selector: vscode.DocumentSelector = { scheme: "file", language: "*" };
-    context.subscriptions.push(
-        vscode.languages.registerDocumentLinkProvider(selector, provider)
-    );
 }
 
-function getRepoInfo(filePath: string): { repoUrl: string; providerName: string; repoName: string | null } | null {
+export function getRepoInfo(
+    filePath: string,
+    execSyncFn: (
+        command: string,
+        options?: child_process.ExecSyncOptions
+    ) => Buffer = child_process.execSync
+): RepoInfo | null {
     let dir = path.dirname(filePath);
 
     while (true) {
-        if (fs.existsSync(path.join(dir, ".git"))) {
+        if (fs.existsSync(path.join(dir, '.git'))) {
             break;
         }
         const parentDir = path.dirname(dir);
@@ -80,17 +94,16 @@ function getRepoInfo(filePath: string): { repoUrl: string; providerName: string;
     }
 
     try {
-        const originBuffer = child_process.execSync(
-            "git config --get remote.origin.url",
-            { cwd: dir }
-        );
+        const originBuffer = execSyncFn('git config --get remote.origin.url', {
+            cwd: dir,
+        });
         const originUrl = originBuffer.toString().trim();
 
         let repoUrl = '';
         let providerName = '';
         let repoName: string | null = null;
 
-        if (originUrl.startsWith("git@")) {
+        if (originUrl.startsWith('git@')) {
             const sshMatch = originUrl.match(/git@([^:]+):(.+?)(\.git)?$/);
             if (sshMatch) {
                 const host = sshMatch[1];
@@ -100,10 +113,10 @@ function getRepoInfo(filePath: string): { repoUrl: string; providerName: string;
                 repoName = repoPath;
             }
         } else if (
-            originUrl.startsWith("http://") ||
-            originUrl.startsWith("https://")
+            originUrl.startsWith('http://') ||
+            originUrl.startsWith('https://')
         ) {
-            const urlWithoutGit = originUrl.replace(/\.git$/, "");
+            const urlWithoutGit = originUrl.replace(/\.git$/, '');
             const urlMatch = urlWithoutGit.match(/https?:\/\/([^\/]+)\/(.+)/);
             if (urlMatch) {
                 const host = urlMatch[1];
@@ -136,7 +149,11 @@ function getProviderName(host: string): string {
     }
 }
 
-function getIssueUrl(repoUrl: string, issueNumber: string, providerName: string): string {
+export function getIssueUrl(
+    repoUrl: string,
+    issueNumber: string,
+    providerName: string
+): string {
     switch (providerName) {
         case 'GitHub':
             return `${repoUrl}/issues/${issueNumber}`;
@@ -149,52 +166,75 @@ function getIssueUrl(repoUrl: string, issueNumber: string, providerName: string)
     }
 }
 
-function tokenizeDocument(
+export function tokenizeDocument(
     document: vscode.TextDocument
 ): { text: string; range: vscode.Range; type: string }[] {
     const tokens: { text: string; range: vscode.Range; type: string }[] = [];
-    const lineCount = document.lineCount;
+    const text = document.getText();
 
-    for (let lineNumber = 0; lineNumber < lineCount; lineNumber++) {
-        const line = document.lineAt(lineNumber);
-        const lineText = line.text;
-        const tokenType = getTokenType(lineText, document.languageId);
+    const commentRegexes: { [key: string]: RegExp } = {
+        javascript: /\/\/.*|\/\*[\s\S]*?\*\//g,
+        typescript: /\/\/.*|\/\*[\s\S]*?\*\//g,
+        python: /#.*|'''[\s\S]*?'''|"""[\s\S]*?"""/g,
+    };
+
+    const commentRegex =
+        commentRegexes[document.languageId] ||
+        /\/\/.*|\/\*[\s\S]*?\*\//g;
+
+    let match: RegExpExecArray | null;
+    while ((match = commentRegex.exec(text)) !== null) {
+        const matchStart = match.index;
+        const matchEnd = match.index + match[0].length;
+
+        const range = new vscode.Range(
+            document.positionAt(matchStart),
+            document.positionAt(matchEnd)
+        );
+
         tokens.push({
-            text: lineText,
-            range: line.range,
-            type: tokenType,
+            text: match[0],
+            range: range,
+            type: 'comment',
         });
     }
 
     return tokens;
 }
 
-function getTokenType(lineText: string, languageId: string): string {
+export function getTokenType(lineText: string, languageId: string): string {
     const trimmedLine = lineText.trim();
 
     const commentSymbols: { [key: string]: string[] } = {
-        javascript: ["//", "/*", "*", "*/"],
-        typescript: ["//", "/*", "*", "*/"],
-        python: ["#"],
+        javascript: ['//', '/*', '*', '*/'],
+        typescript: ['//', '/*', '*', '*/'],
+        python: ['#'],
     };
 
     const symbols = commentSymbols[languageId] || [
-        "//",
-        "#",
-        "/*",
-        "*",
-        "*/",
-        "--",
-        "%",
+        '//',
+        '#',
+        '/*',
+        '*',
+        '*/',
+        '--',
+        '%',
     ];
 
     for (const symbol of symbols) {
         if (trimmedLine.startsWith(symbol)) {
-            return "comment";
+            return 'comment';
         }
     }
 
-    return "code";
+    return 'code';
 }
 
 export function deactivate() {}
+
+// Define repo type for tests
+export type RepoInfo = {
+    repoUrl: string;
+    providerName: string;
+    repoName: string | null;
+};
