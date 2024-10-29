@@ -179,7 +179,7 @@ export function tokenizeDocument(
         javascript: /\/\/.*|\/\*[\s\S]*?\*\//g,
         typescript: /\/\/.*|\/\*[\s\S]*?\*\//g,
         python: /#.*|'''[\s\S]*?'''|"""[\s\S]*?"""/g,
-        rust: /\/\/.*|\/\*[\s\S]*?\*\//g, // broken on rust (#2)
+        rust: /\/\/.*|\/\*[\s\S]*?\*\//g,
         java: /\/\/.*|\/\*[\s\S]*?\*\//g,
         c: /\/\/.*|\/\*[\s\S]*?\*\//g,
         cpp: /\/\/.*|\/\*[\s\S]*?\*\//g,
