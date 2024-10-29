@@ -3,11 +3,12 @@
     "displayName": "Comment Issues",
     "description": "Links issue numbers in comments to Repository issues.",
     "repository": "https://github.com/ryawaa/comment-issues",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "publisher": "ryawaa",
     "engines": {
         "vscode": "^1.74.0"
     },
+    "icon": "assets/icon.png",
     "activationEvents": [
         "onLanguage"
     ],

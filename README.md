@@ -2,7 +2,8 @@
 
 Automatically link issue numbers in your code comments to your repository issues.
 
-**Marketplace Link**: https://marketplace.visualstudio.com/items?itemName=ryawaa.comment-issues
+[Install on VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=ryawaa.comment-issues) ·
+[Source Code](https://github.com/ryawaa/comment-issues)
 
 ![screenshot](https://github.com/user-attachments/assets/088f7f0e-19e7-4cd5-af52-1089dd0e20fd)
 
